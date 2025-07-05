@@ -1,4 +1,4 @@
-name: C:\conda_envs\lp_project
+name: detect_plates
 channels:
   - defaults
 dependencies:
