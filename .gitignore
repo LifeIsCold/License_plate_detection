@@ -22,3 +22,6 @@ checkpoints/
 .vscode/
 .idea/
 .DS_Store
+
+#Images and Labels
+datasets/
