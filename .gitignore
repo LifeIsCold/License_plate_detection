@@ -3,7 +3,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
+crop_plate.py
+license_plate_detection.py
+efficientnet_chars.pth
 # Conda environments
 .conda/
 envs/
