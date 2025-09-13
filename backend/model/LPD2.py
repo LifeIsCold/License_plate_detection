@@ -9,7 +9,7 @@ import numpy as np
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # Load YOLOv5 plate detector
-det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='c:/Users/User/Desktop/appDev/backend/model/plate_detection.pt')
+det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='C:/Users/USER/Desktop/Car_license_plate_detection_using_CNN/backend/model/plate_detection.pt')
 
 # Load TrOCR model and processor
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
