@@ -8,19 +8,47 @@ import numpy as np
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-# Load YOLOv5 plate detector
-det_model = torch.hub.load('ultralytics/yolov5', 'custom', path='C:/Users/USER/Desktop/Car_license_plate_detection_using_CNN/backend/model/plate_detection.pt')
+MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
+YOLO_DIR = os.path.join(MODEL_DIR, 'yolov5')
+PLATE_MODEL_PATH = os.environ.get(
+    'PLATE_MODEL_PATH',
+    os.path.join(MODEL_DIR, 'plate_detection.pt'),
+)
 
-# Load TrOCR model and processor
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-processor = TrOCRProcessor.from_pretrained('microsoft/trocr-base-printed')
-model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed').to(device)
+_det_model = None
+_processor = None
+_model = None
+_device = None
+
+
+def _load_models():
+    global _det_model, _processor, _model, _device
+
+    if _det_model is not None:
+        return
+
+    if not os.path.isfile(PLATE_MODEL_PATH):
+        raise FileNotFoundError(
+            f"Plate model weights not found at {PLATE_MODEL_PATH}. "
+            "Copy plate_detection.pt into the models/ directory before running inference."
+        )
+
+    _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    _det_model = torch.hub.load(YOLO_DIR, 'custom', path=PLATE_MODEL_PATH, source='local')
+    _processor = TrOCRProcessor.from_pretrained('microsoft/trocr-base-printed')
+    _model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed').to(_device)
+
+
+def _get_models():
+    _load_models()
+    return _det_model, _processor, _model, _device
 
 def clean_plate_string(plate_str):
     # Only keep alphanumeric characters
     return re.sub(r'[^A-Za-z0-9]', '', plate_str)
 
 def recognize_plate_trocr(plate_crop):
+    det_model, processor, model, device = _get_models()
     h, w = plate_crop.shape[:2]
     # Remove upper third (adjust as needed)
     main_plate_crop = plate_crop[int(h*0.33):, :]
@@ -34,6 +62,7 @@ def recognize_plate_trocr_ensemble(plate_crop, n=5):
     """
     Run TrOCR multiple times with slight augmentations and use majority voting for each character.
     """
+    det_model, processor, model, device = _get_models()
     preds = []
     for _ in range(n):
         # Apply random brightness/contrast augmentation
@@ -79,6 +108,7 @@ def process_plate_crop(plate_crop):
 
 # New function for backend: process a single image file
 def process_image_file(image_path):
+    det_model, processor, model, device = _get_models()
     img = cv2.imread(image_path)
     if img is None:
         print(f"Could not read {image_path}")

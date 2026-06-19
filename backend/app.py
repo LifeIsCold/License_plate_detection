@@ -21,11 +21,15 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # MySQL config
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'ppsmisZzz23@!',
-    'database': 'parking_db'
+    'host': os.environ.get('MYSQL_HOST', 'localhost'),
+    'port': int(os.environ.get('MYSQL_PORT', '3306')),
+    'user': os.environ.get('MYSQL_USER', 'root'),
+    'password': os.environ.get('MYSQL_PASSWORD', 'changeme'),
+    'database': os.environ.get('MYSQL_DATABASE', 'parking_db'),
 }
+
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+STATIC_DIR = os.path.join(FRONTEND_DIR, 'static')
 
 # Fare calculation constants
 BASE_FARE = 20
@@ -133,7 +137,7 @@ def logs_page():
 # Serve static files
 @app.route('/static/<path:filename>')
 def static_files(filename):
-    return send_from_directory('frontend/static', filename)
+    return send_from_directory(STATIC_DIR, filename)
 
 # API Routes
 @app.route('/login', methods=['POST'])
@@ -459,5 +463,7 @@ if __name__ == '__main__':
         print("Default login: admin / admin123")
     else:
         print("Warning: Database initialization failed")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
+    port = int(os.environ.get('PORT', '5000'))
+    app.run(debug=debug, host='0.0.0.0', port=port)
